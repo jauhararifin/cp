@@ -30,6 +30,9 @@ public:
 	friend polynomial<S> operator+(const polynomial<S>& a, const polynomial<S>& b);
 
 	template<typename S>
+	friend polynomial<S> operator*(const polynomial<S>& a, const polynomial<S>& b);
+
+	template<typename S>
 	friend polynomial<S> operator-(polynomial<S> a);
 
 	template<typename S>
@@ -56,6 +59,18 @@ polynomial<S> operator+(const polynomial<S>& a, const polynomial<S>& b) {
 };
 
 template<typename S>
+polynomial<S> operator*(const polynomial<S>& a, const polynomial<S>& b) {
+	polynomial<S> res;
+	for (int i = 0; i < a.arr.size(); i++)
+		for (int j = 0; j < b.arr.size(); j++)
+			if (!a.modEnable)
+				res[i+j] = res[i+j] + (i < a.arr.size() ? a.arr[i] : S()) * (j < b.arr.size() ? b.arr[j] : S());
+			else
+				res[i+j] = (res[i+j] + (((i < a.arr.size() ? a.arr[i] : S()) % a.mod) * ((j < b.arr.size() ? b.arr[j] : S()) % a.mod)) % a.mod) % a.mod;
+	return res;
+};
+
+template<typename S>
 polynomial<S> operator-(polynomial<S> a) {
 	for (int i = 0; i < (int) a.arr.size(); i++) {
 		a.arr[i] *= -1;
@@ -78,6 +93,6 @@ int main() {
 	q[1] = 2;
 	q[3] = 5;
 	q[7] = 9;
-	cout<<p<<endl<<q<<endl<<(p+q)<<endl<<(-q)<<endl<<(p-q)<<endl;
+	cout<<p<<endl<<q<<endl<<(p+q)<<endl<<(-q)<<endl<<(p-q)<<endl<<p*q<<endl;
 	return 0;
 }
