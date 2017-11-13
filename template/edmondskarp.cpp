@@ -4,10 +4,18 @@ using namespace std;
 
 template <typename T>
 T edmonskarp(int n, vector<pair<int,T> >* adj, int s, int t) {
-	map<pair<int,int>,T> flow, capacity;
+	T** flow = new T*[n];
+	T** capacity = new T*[n];
+	for (int i = 0; i < n; i++) {
+		flow[i] = new T[n];
+		capacity[i] = new T[n];
+		for (int j = 0; j < n; j++)
+			flow[i][j] = capacity[i][j] = 0;
+	}
+
 	for (int i = 0; i < n; i++)
 		for (int j = 0; j < (int) adj[i].size(); j++)
-			capacity[make_pair(i, adj[i][j].first)] += adj[i][j].second;
+			capacity[i][adj[i][j].first] += adj[i][j].second;
 	T maxflow = 0;
 	
 	int* prev = new int[n];
@@ -23,7 +31,7 @@ T edmonskarp(int n, vector<pair<int,T> >* adj, int s, int t) {
 			if (node == t) break;
 			for (int i = 0; i < (int) adj[node].size(); i++) {
 				int to = adj[node][i].first;
-				if (prev[to] < 0 && flow[make_pair(node, to)] < capacity[make_pair(node, to)])
+				if (prev[to] < 0 && flow[node][to] < capacity[node][to])
 					que.push(make_pair(to, node));
 			}
 		}
@@ -38,15 +46,18 @@ T edmonskarp(int n, vector<pair<int,T> >* adj, int s, int t) {
 
 		T aug = -1;
 		for (int i = 1; i < (int) path.size(); i++)
-			if (aug < 0 || capacity[make_pair(path[i-1], path[i])] - flow[make_pair(path[i-1], path[i])] < aug)
-				aug = capacity[make_pair(path[i-1], path[i])] - flow[make_pair(path[i-1], path[i])];
+			if (aug < 0 || capacity[path[i-1]][path[i]] - flow[path[i-1]][path[i]] < aug)
+				aug = capacity[path[i-1]][path[i]] - flow[path[i-1]][path[i]];
 		maxflow += aug;
 		for (int i = 1; i < (int) path.size(); i++) {
-			flow[make_pair(path[i-1], path[i])] += aug;
-			flow[make_pair(path[i], path[i-1])] -= aug;
+			flow[path[i-1]][path[i]] += aug;
+			flow[path[i]][path[i-1]] -= aug;
 		}
 	}
 	delete(prev);
+	for (int i = 0; i < n; i++)
+		delete(flow[i]), delete(capacity[i]);
+	delete(flow); delete(capacity);
 
 	return maxflow;
 }
