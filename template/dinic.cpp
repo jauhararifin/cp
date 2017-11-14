@@ -61,11 +61,11 @@ T dinic(int n, vector<pair<int,T> >* adjlist, int s, int t) {
 			maxflow += new_flow;
 	}
 	for (int i = 0; i < n; i++)
-		delete(flow[i]), delete(capacity[i]);
-	delete(adj);
-	delete(flow);
-	delete(capacity);
-	delete(level);
+		delete [] flow[i], delete [] capacity[i];
+	delete [] adj;
+	delete [] flow;
+	delete [] capacity;
+	delete [] level;
 
 	return maxflow;
 }
