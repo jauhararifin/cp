@@ -63,15 +63,15 @@ T edmonskarp(int n, vector<pair<int,T> >* adj, int s, int t) {
 }
 
 int n,m;
-vector<pair<int,int> > adj[5000];
+vector<pair<int,long long> > adj[5000];
 
 int main() {
 	scanf("%d%d", &n, &m);
 	while (m--) {
-		int a,b,c; scanf("%d%d%d", &a, &b, &c);
+		int a,b; long long c; scanf("%d%d%lld", &a, &b, &c);
 		adj[a-1].push_back(make_pair(b-1,c));
 		adj[b-1].push_back(make_pair(a-1,c));
 	}
-	printf("%d\n", edmonskarp(n, adj, 0, n - 1));
+	printf("%lld\n", edmonskarp(n, adj, 0, n - 1));
 	return 0;
 }
