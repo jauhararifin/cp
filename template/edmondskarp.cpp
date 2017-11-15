@@ -54,10 +54,10 @@ T edmonskarp(int n, vector<pair<int,T> >* adj, int s, int t) {
 			flow[path[i]][path[i-1]] -= aug;
 		}
 	}
-	delete(prev);
+	delete [] prev;
 	for (int i = 0; i < n; i++)
-		delete(flow[i]), delete(capacity[i]);
-	delete(flow); delete(capacity);
+		delete [] flow[i], delete [] capacity[i];
+	delete [] flow; delete [] capacity;
 
 	return maxflow;
 }
