@@ -31,7 +31,7 @@ T dinic(int n, vector<pair<int,T> >* adjlist, int s, int t) {
 		flow[i] = new T[n];
 		capacity[i] = new T[n];
 		for (int j = 0; j < n; j++)
-			flow[i][j] = 0;
+			flow[i][j] = 0, capacity[i][j] = 0;
 		for (int j = 0; j < (int) adjlist[i].size(); j++) {
 			if (capacity[i][adjlist[i][j].first] == 0)
 				adj[i].push_back(adjlist[i][j].first);
@@ -60,6 +60,7 @@ T dinic(int n, vector<pair<int,T> >* adjlist, int s, int t) {
 		while (new_flow = dinic_flow(adjlist, level, flow, capacity, s, t, (T) -1))
 			maxflow += new_flow;
 	}
+	
 	for (int i = 0; i < n; i++)
 		delete [] flow[i], delete [] capacity[i];
 	delete [] adj;
