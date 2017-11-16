@@ -19,7 +19,6 @@ T dinic_flow(vector<pair<int,T> >* adjlist, int* level, T** flow, T** capacity, 
 	}
 	return total_flow;
 }
-
 template<typename T>
 T dinic(int n, vector<pair<int,T> >* adjlist, int s, int t) {
 	T maxflow = 0;
@@ -57,7 +56,7 @@ T dinic(int n, vector<pair<int,T> >* adjlist, int s, int t) {
 		if (level[t] < 0)
 			break;
 		T new_flow;
-		while (new_flow = dinic_flow(adjlist, level, flow, capacity, s, t, (T) -1))
+		while ((new_flow = dinic_flow(adjlist, level, flow, capacity, s, t, (T) -1)) > 0)
 			maxflow += new_flow;
 	}
 	
