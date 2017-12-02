@@ -40,9 +40,10 @@ sparse_table<T> generate_sparse_table(int n, T* arr) {
     return generate_sparse_table(v);
 }
 
-// pair<index,value>
+// pair<index,value>, query on [from,to)
 template<typename T>
 pair<int,T> query_sparse_table(sparse_table<T> st, int from, int to) {
+    to--;
     int k = (int) log2(to-from+1);
     if (st.a[st.st[from][k]] <= st.a[st.st[to-(1<<k)+1][k]])
         return make_pair(st.st[from][k], st.a[st.st[from][k]]);
@@ -69,7 +70,7 @@ int main() {
     scanf("%d", &q);
     while (q--) {
         scanf("%d%d", &x, &y);
-        printf("%d\n", query_sparse_table(st, x, y).second);
+        printf("%d\n", query_sparse_table(st, x, y + 1).second);
     }
 
     delete_sparse_table(st);
