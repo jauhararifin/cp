@@ -1,5 +1,12 @@
 #include <bits/stdc++.h>
 
+/**
+LCA TEMPLATE
+Using euler tour and sparse table.
+Condition: every child node-id must less than its parent
+Precomputation O(NlogN), Query O(1)
+*/
+
 using namespace std;
 
 template<typename T>
