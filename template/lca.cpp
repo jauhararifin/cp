@@ -1,12 +1,5 @@
 #include <bits/stdc++.h>
 
-/**
-LCA TEMPLATE
-Using euler tour and sparse table.
-Condition: every child node-id must less than its parent
-Precomputation O(NlogN), Query O(1)
-*/
-
 using namespace std;
 
 template<typename T>
@@ -69,25 +62,36 @@ void delete_sparse_table(sparse_table<T> st) {
 typedef struct {
     int n;
     int* first_appear;
+    int* node_mapping;
+    int* index_mapping;
     sparse_table<int> st;
 } lca;
 
-void generate_euler_tour(int n, vector<int>* adjlist, int node, int before, vector<int> &output) {
-    output.push_back(node);
+void generate_euler_tour(int n, vector<int>* adjlist, int node, int before, vector<int> &output, int* node_mapping, int* index_mapping, int& last_mapping) {
+    if (node_mapping[node] < 0) {
+        index_mapping[last_mapping] = node;
+        node_mapping[node] = last_mapping++;
+    }
+    output.push_back(node_mapping[node]);
     for (int i = 0; i < (int) adjlist[node].size(); i++)
         if (adjlist[node][i] != before) {
-            generate_euler_tour(n, adjlist, adjlist[node][i], node, output);
-            output.push_back(node);
+            generate_euler_tour(n, adjlist, adjlist[node][i], node, output, node_mapping, index_mapping, last_mapping);
+            output.push_back(node_mapping[node]);
         }
 }
 
 lca generate_lca(int n, vector<int>* adjlist, int root) {
     vector<int> euler_tour;
-    generate_euler_tour(n, adjlist, root, -1, euler_tour);
+    int* node_mapping = (int*) malloc(n*sizeof(int));
+    int* index_mapping = (int*) malloc(n*sizeof(int));
+    memset(node_mapping, -1, n*sizeof(int)); memset(index_mapping, -1, n*sizeof(int)); int lm = 0;
+    generate_euler_tour(n, adjlist, root, -1, euler_tour, node_mapping, index_mapping, lm);
 
     lca result;
     result.first_appear = (int*) malloc(n*sizeof(int));
     memset(result.first_appear, -1, sizeof(int) * n);
+    result.node_mapping = node_mapping;
+    result.index_mapping = index_mapping;
     result.n = n;
     for (int i = 0; i < (int) euler_tour.size(); i++)
         if (result.first_appear[euler_tour[i]] < 0)
@@ -100,35 +104,32 @@ lca generate_lca(int n, vector<int>* adjlist, int root) {
 void delete_lca(lca the_lca) {
     delete_sparse_table(the_lca.st);
     free(the_lca.first_appear);
+    free(the_lca.node_mapping);
+    free(the_lca.index_mapping);
 }
 
 int query_lca(const lca& the_lca, int n1, int n2) {
-    int a = the_lca.first_appear[n1];
-    int b = the_lca.first_appear[n2];
-    return query_sparse_table(the_lca.st, min(a,b), max(a,b) + 1).second;
+    int a = the_lca.first_appear[the_lca.node_mapping[n1]];
+    int b = the_lca.first_appear[the_lca.node_mapping[n2]];
+    return the_lca.index_mapping[query_sparse_table(the_lca.st, min(a,b), max(a,b) + 1).second];
 }
 
-int t,n,q;
+int n,q;
 vector<int> adjlist[1000];
 
 int main() {
-    scanf("%d", &t);
-    for (int tc = 1; tc <= t; tc++) {
-        scanf("%d", &n);
-        for (int i = 0; i < n; i++) {
-            int m,x; scanf("%d", &m);
-            adjlist[i].clear();
-            while (m--)
-                scanf("%d", &x), adjlist[i].push_back(x-1);
-        }
-        lca l = generate_lca(n, adjlist, 0);
-        scanf("%d", &q);
-        printf("Case %d:\n", tc);
-        while (q--) {
-            int a,b; scanf("%d%d", &a, &b); a--; b--;
-            printf("%d\n", query_lca(l,a,b) + 1);
-        }
-        delete_lca(l);
+    scanf("%d", &n);
+    for (int i = 0; i < n; i++) {
+        int m,x; scanf("%d", &m);
+        while (m--)
+            scanf("%d", &x), adjlist[i].push_back(x-1);
     }
+    lca l = generate_lca(n, adjlist, 0);
+    scanf("%d", &q);
+    while (q--) {
+        int a,b; scanf("%d%d", &a, &b); a--; b--;
+        printf("%d\n", query_lca(l,a,b) + 1);
+    }
+    delete_lca(l);
     return 0;
 }
