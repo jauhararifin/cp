@@ -2,32 +2,52 @@
 
 using namespace std;
 
-typedef struct {
+class disjoin_set {
+public:
+    disjoin_set(int ns);
+    disjoin_set(const disjoin_set &ds);
+    void operator=(const disjoin_set &ds);
+    ~disjoin_set();
+    int find(int x);
+    void join(int x, int y);
+private:
     int n;
     int* par;
-} disjoin_set;
+};
 
-disjoin_set init_disjoin_set(int n) {
-    disjoin_set ds; ds.n = n;
-    ds.par = new int[n];
-    for (int i = 0; i < n; i++) ds.par[i] = i;
-    return ds;
+disjoin_set::disjoin_set(int n) {
+    this->n = n;
+    par = new int[n];
+    for (int i = 0; i < n; i++) par[i] = i;
 }
 
-int parent_disjoin_set(disjoin_set ds, int x) {
-    if (ds.par[x] == x) return x;
-    return ds.par[x] = parent_disjoin_set(ds, ds.par[x]);
+disjoin_set::disjoin_set(const disjoin_set& ds) {
+    n = ds.n;
+    par = new int[n];
+    for (int i = 0; i < n; i++) par[i] = ds.par[i];
 }
 
-void union_disjoin_set(disjoin_set ds, int a, int b) {
-    if (parent_disjoin_set(ds, a) < parent_disjoin_set(ds, b))
-        ds.par[parent_disjoin_set(ds, b)] = parent_disjoin_set(ds, a);
+void disjoin_set::operator=(const disjoin_set &ds) {
+    n = ds.n;
+    delete [] par;
+    par = new int[n];
+    for (int i = 0; i < n; i++) par[i] = ds.par[i];
+}
+
+disjoin_set::~disjoin_set() {
+    delete [] par;
+}
+
+int disjoin_set::find(int x) {
+    if (par[x] == x) return x;
+    return par[x] = find(par[x]);
+}
+
+void disjoin_set::join(int x, int y) {
+    if (find(x) < find(y))
+        par[find(y)] = find(x);
     else
-        ds.par[parent_disjoin_set(ds, a)] = parent_disjoin_set(ds, b);
-}
-
-void delete_disjoin_set(disjoin_set ds) {
-    delete [] ds.par;
+        par[find(x)] = find(y);
 }
 
 int main() {
