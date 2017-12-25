@@ -11,8 +11,20 @@ print_usage() {
 
 compile () {
 	problem=$1
+	failed=false
+	echo "compiling problem $problem"
 
-	if [ -f $problem.cpp || -f $problem.cc || -f $problem.c++ ]; then
+	if [ ! -d .jcp ]; then
+		echo "Creating jcp directory"
+		mkdir .jcp
+		if [ ! -d .jcp ]; then
+			echo "Cannot creating .jcp directory, aborted"
+			exit 1
+		fi
+	fi
+	echo "" > .jcp/compile_error
+
+	if [[ -f $problem.cpp || -f $problem.cc || -f $problem.c++ ]]; then
 		if [ -f $problem.cpp ]; then
 			filename=$problem.cpp
 		elif [ -f $problem.cc ]; then
@@ -21,27 +33,80 @@ compile () {
 			filename=$problem.c++
 		fi
 
-		echo "Compiling c++ solution: $filename"
-		g++ $filename -Wall -O2 -g -std=c++11 -static -pipe -o $problem
+		echo "compiling c++ solution: $filename"
+		g++ $filename -Wall -O2 -g -std=c++11 -static -pipe -o .jcp/$problem > .jcp/compile.tmp 2>&1
+		if [ $? -eq 0 ]; then
+			echo -e "\e[32mSuccess compiling c++ solution\e[0m"
+		else
+			echo -e "\e[31mFailed compiling c++ solution\e[0m"
+			failed=true
+			cat .jcp/compile.tmp >> .jcp/compile_error
+		fi
 	fi
 
 	if [ -f $problem.c ]; then
-		echo "Compiling c solution: $problem.cpp"
-		gcc $problem.c -Wall -O2 -g -static -pipe -o $problem
+		echo "compiling c solution: $problem.cpp"
+		gcc $problem.c -Wall -O2 -g -static -pipe -o .jcp/$problem > .jcp/compile.tmp 2>&1
+		if [ $? -eq 0 ]; then
+			echo -e "\e[32mSuccess compiling c solution\e[0m"
+		else
+			echo -e "\e[31mFailed compiling c solution\e[0m"
+			failed=true
+			cat .jcp/compile.tmp >> .jcp/compile_error
+		fi
 	fi
 
 	if [ -f $problem.pas ]; then
-		echo "Compiling pascal solution: $problem.pas"
-		fpc -viwn -O2 -Sg -XS -o $problem $problem.pas
+		echo "compiling pascal solution: $problem.pas"
+		fpc -viwn -O2 -Sg -XS -o.jcp/$problem $problem.pas > .jcp/compile.tmp 2>&1
+		if [ $? -eq 0 ]; then
+			echo -e "\e[32mSuccess compiling pascal solution\e[0m"
+		else
+			echo -e "\e[31mFailed compiling pascal solution\e[0m"
+			failed=true
+			cat .jcp/compile.tmp >> .jcp/compile_error
+		fi
 	fi
 
 	if [ -f $problem.py ]; then
 		echo "Skipping python solution: $problem.py"
+		cp $problem.py .jcp/$problem.py > .jcp/compile.tmp 2>&1
+		if [ $? -eq 0 ]; then
+			echo -e "\e[32mSuccess copying python solution\e[0m"
+		else
+			echo -e "\e[31mFailed copying python solution\e[0m"
+			failed=true
+			cat .jcp/compile.tmp >> .jcp/compile_error
+		fi
 	fi
 
 	if [ -f $problem.java ]; then
 		echo "Skipping java solution: $problem.java"
-		javac -encoding UTF-8 -d . $problem.java
+		javac -encoding UTF-8 -d .jcp $problem.java > .jcp/compile.tmp 2>&1
+		if [ $? -eq 0 ]; then
+			echo -e "\e[32mSuccess compiling java solution\e[0m"
+		else
+			echo -e "\e[31mFailed compiling java solution\e[0m"
+			failed=true
+			cat .jcp/compile.tmp >> .jcp/compile_error
+		fi
+	fi
+
+	if [ $failed = true ]; then
+		cat .jcp/compile_error
+	fi
+}
+
+run() {
+	compile $1
+	if [ -f .jcp/$1 ]; then
+		.jcp/$1
+	elif [ -f .jcp/$1.py ]; then
+		python .jcp/$1
+	elif [ -f .jcp/$1.class ]; then
+		java .jcp/$1
+	else
+		echo -e "\e[31mCannot find executable file\e[0m"
 	fi
 }
 
@@ -57,9 +122,17 @@ fi
 if [ $1 = "install" ]; then
 	install $0
 elif [ $1 = "compile" ]; then
+	if [ $# -lt 2 ]; then
+		echo "Please specify problem name"
+		exit 1
+	fi
     compile $2
 elif [ $1 = "run" ]; then
-    echo "run"
+	if [ $# -lt 2 ]; then
+		echo "Please specify problem name"
+		exit 1
+	fi
+    run $2
 elif [ $1 = "test"]; then
 	echo "test"
 else
