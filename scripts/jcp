@@ -93,7 +93,9 @@ compile () {
 	fi
 
 	if [ $failed = true ]; then
+		echo -ne "\e[31m"
 		cat .jcp/compile_error
+		echo -e "\e[0m"
 	fi
 }
 
@@ -120,14 +122,12 @@ testing() {
 
 	for file in "${files[@]}"
 	do
-		echo ""
-		echo "=== Testing problem $problem using $file ==="
-
 		len=$(wc -m <<< $file)
 		outputfile=$(head -c $(($len-3)) <<< $file)out
 		
 		run $problem < $file > .jcp/$outputfile
 
+		echo -n "Testing using inputfile [$file]: "
 		if [ -f $outputfile ]; then
 			diff $outputfile .jcp/$outputfile
 			if [ $? -eq 0 ]; then
@@ -135,6 +135,8 @@ testing() {
 			else
 				echo -e "\e[31mWrong\e[0m"
 			fi
+		else
+			echo "output file successfully written to .jcp/$outputfile"
 		fi
 	done
 }
