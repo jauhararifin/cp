@@ -7,8 +7,9 @@ int main() {
     if (n % b == 0)
         printf("YES\n%d %d\n", 0, n / b);
     else {
-        for (int i = 1; n > 0; i++) {
+        for (int i = 1; n >= 0; i++) {
             n -= a;
+            if (n < 0) break;
             if (n % b == 0) {
                 printf("YES\n%d %d\n", i, n / b);
                 return 0;
