@@ -1,0 +1,69 @@
+#!/bin/bash
+
+print_usage() {
+	echo "Usage: jcp <command> [problem] [options]"
+	echo "Available commands:"
+	echo "  install   install jcp by creating softlink"
+	echo "  compile   compile program"
+	echo "  run       compile and run programs"
+	echo "  test      compile and test program"
+}
+
+compile () {
+	problem=$1
+
+	if [ -f $problem.cpp || -f $problem.cc || -f $problem.c++ ]; then
+		if [ -f $problem.cpp ]; then
+			filename=$problem.cpp
+		elif [ -f $problem.cc ]; then
+			filename=$problem.cc
+		else
+			filename=$problem.c++
+		fi
+
+		echo "Compiling c++ solution: $filename"
+		g++ $filename -Wall -O2 -g -std=c++11 -static -pipe -o $problem
+	fi
+
+	if [ -f $problem.c ]; then
+		echo "Compiling c solution: $problem.cpp"
+		gcc $problem.c -Wall -O2 -g -static -pipe -o $problem
+	fi
+
+	if [ -f $problem.pas ]; then
+		echo "Compiling pascal solution: $problem.pas"
+		fpc -viwn -O2 -Sg -XS -o $problem $problem.pas
+	fi
+
+	if [ -f $problem.py ]; then
+		echo "Skipping python solution: $problem.py"
+	fi
+
+	if [ -f $problem.java ]; then
+		echo "Skipping java solution: $problem.java"
+		javac -encoding UTF-8 -d . $problem.java
+	fi
+}
+
+install() {
+	ln -s $(pwd)/${BASH_SOURCE[0]} /usr/bin/jcp
+}
+
+if [ $# -lt 1 ]; then
+    print_usage
+    exit 1
+fi
+
+if [ $1 = "install" ]; then
+	install $0
+elif [ $1 = "compile" ]; then
+    compile $2
+elif [ $1 = "run" ]; then
+    echo "run"
+elif [ $1 = "test"]; then
+	echo "test"
+else
+    print_usage
+    exit 1
+fi
+ 
