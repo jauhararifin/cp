@@ -98,7 +98,10 @@ compile () {
 }
 
 run() {
-	compile $1
+	if [[ $# -gt 1 && $2 = compile ]]; then
+		compile $1
+	fi
+
 	if [ -f .jcp/$1 ]; then
 		.jcp/$1
 	elif [ -f .jcp/$1.py ]; then
@@ -108,6 +111,32 @@ run() {
 	else
 		echo -e "\e[31mCannot find executable file\e[0m"
 	fi
+}
+
+testing() {
+	problem=$1
+	compile $problem
+	files=( $(ls | grep -e "$problem.*in") )
+
+	for file in "${files[@]}"
+	do
+		echo ""
+		echo "=== Testing problem $problem using $file ==="
+
+		len=$(wc -m <<< $file)
+		outputfile=$(head -c $(($len-3)) <<< $file)out
+		
+		run $problem < $file > .jcp/$outputfile
+
+		if [ -f $outputfile ]; then
+			diff $outputfile .jcp/$outputfile
+			if [ $? -eq 0 ]; then
+				echo -e "\e[32mCorrect\e[0m"
+			else
+				echo -e "\e[31mWrong\e[0m"
+			fi
+		fi
+	done
 }
 
 install() {
@@ -132,9 +161,9 @@ elif [ $1 = "run" ]; then
 		echo "Please specify problem name"
 		exit 1
 	fi
-    run $2
-elif [ $1 = "test"]; then
-	echo "test"
+    run $2 compile
+elif [ $1 = "test" ]; then
+	testing $2
 else
     print_usage
     exit 1
