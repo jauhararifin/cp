@@ -4,9 +4,10 @@ print_usage() {
 	echo "Usage: jcp <command> [problem] [options]"
 	echo "Available commands:"
 	echo "  install   install jcp by creating softlink"
-	echo "  compile   compile program"
-	echo "  run       compile and run programs"
-	echo "  test      compile and test program"
+	echo "  compile <problem> [language]   compile program"
+	echo "  run <problem> [language]       compile and run programs"
+	echo "  test <problem> [language]      compile and test program"
+	echo "Available languages: c,c++,pascal,java,python"
 }
 
 compile () {
