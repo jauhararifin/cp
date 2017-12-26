@@ -11,6 +11,11 @@ print_usage() {
 
 compile () {
 	problem=$1
+	language=c++
+	if [ $# -gt 1 ]; then
+		language=$2
+	fi
+
 	failed=false
 	echo "compiling problem $problem"
 
@@ -24,7 +29,7 @@ compile () {
 	fi
 	echo "" > .jcp/compile_error
 
-	if [[ -f $problem.cpp || -f $problem.cc || -f $problem.c++ ]]; then
+	if [[ $language = c++ ]]; then
 		if [ -f $problem.cpp ]; then
 			filename=$problem.cpp
 		elif [ -f $problem.cc ]; then
@@ -34,42 +39,63 @@ compile () {
 		fi
 
 		echo "compiling c++ solution: $filename"
-		g++ $filename -Wall -O2 -g -std=c++11 -static -pipe -o .jcp/$problem > .jcp/compile.tmp 2>&1
-		if [ $? -eq 0 ]; then
-			echo -e "\e[32mSuccess compiling c++ solution\e[0m"
+		
+		compiledDate=$(date +%s -r .jcp/$problem 2> /dev/null || echo -n 0)
+		sourceDate=$(date +%s -r $filename)
+		if [ $compiledDate -gt $sourceDate ]; then
+			echo -e "\e[33mSkipped because c++ solution already compiled\e[0m"
 		else
-			echo -e "\e[31mFailed compiling c++ solution\e[0m"
-			failed=true
-			cat .jcp/compile.tmp >> .jcp/compile_error
+			g++ $filename -Wall -O2 -g -std=c++11 -static -pipe -o .jcp/$problem > .jcp/compile.tmp 2>&1
+			if [ $? -eq 0 ]; then
+				echo -e "\e[32mSuccess compiling c++ solution\e[0m"
+			else
+				echo -e "\e[31mFailed compiling c++ solution\e[0m"
+				failed=true
+				cat .jcp/compile.tmp >> .jcp/compile_error
+			fi
 		fi
 	fi
 
-	if [ -f $problem.c ]; then
-		echo "compiling c solution: $problem.cpp"
-		gcc $problem.c -Wall -O2 -g -static -pipe -o .jcp/$problem > .jcp/compile.tmp 2>&1
-		if [ $? -eq 0 ]; then
-			echo -e "\e[32mSuccess compiling c solution\e[0m"
+	if [ $language = c ]; then
+		echo "compiling c solution: $problem.c"
+
+		compiledDate=$(date +%s -r .jcp/$problem 2> /dev/null || echo -n 0)
+		sourceDate=$(date +%s -r $problem.c)
+		if [ $compiledDate -gt $sourceDate ]; then
+			echo -e "\e[33mSkipped because c solution already compiled\e[0m"
 		else
-			echo -e "\e[31mFailed compiling c solution\e[0m"
-			failed=true
-			cat .jcp/compile.tmp >> .jcp/compile_error
+			gcc $problem.c -Wall -O2 -g -static -pipe -o .jcp/$problem > .jcp/compile.tmp 2>&1
+			if [ $? -eq 0 ]; then
+				echo -e "\e[32mSuccess compiling c solution\e[0m"
+			else
+				echo -e "\e[31mFailed compiling c solution\e[0m"
+				failed=true
+				cat .jcp/compile.tmp >> .jcp/compile_error
+			fi
 		fi
 	fi
 
-	if [ -f $problem.pas ]; then
+	if [ $language = pascal ]; then
 		echo "compiling pascal solution: $problem.pas"
-		fpc -viwn -O2 -Sg -XS -o.jcp/$problem $problem.pas > .jcp/compile.tmp 2>&1
-		if [ $? -eq 0 ]; then
-			echo -e "\e[32mSuccess compiling pascal solution\e[0m"
+
+		compiledDate=$(date +%s -r .jcp/$problem 2> /dev/null || echo -n 0)
+		sourceDate=$(date +%s -r $problem.pas)
+		if [ $compiledDate -gt $sourceDate ]; then
+			echo -e "\e[33mSkipped because pascal solution already compiled\e[0m"
 		else
-			echo -e "\e[31mFailed compiling pascal solution\e[0m"
-			failed=true
-			cat .jcp/compile.tmp >> .jcp/compile_error
+			fpc -viwn -O2 -Sg -XS -o.jcp/$problem $problem.pas > .jcp/compile.tmp 2>&1
+			if [ $? -eq 0 ]; then
+				echo -e "\e[32mSuccess compiling pascal solution\e[0m"
+			else
+				echo -e "\e[31mFailed compiling pascal solution\e[0m"
+				failed=true
+				cat .jcp/compile.tmp >> .jcp/compile_error
+			fi
 		fi
 	fi
 
-	if [ -f $problem.py ]; then
-		echo "Skipping python solution: $problem.py"
+	if [ $language = python ]; then
+		echo "skipping python solution: $problem.py"
 		cp $problem.py .jcp/$problem.py > .jcp/compile.tmp 2>&1
 		if [ $? -eq 0 ]; then
 			echo -e "\e[32mSuccess copying python solution\e[0m"
@@ -80,15 +106,22 @@ compile () {
 		fi
 	fi
 
-	if [ -f $problem.java ]; then
-		echo "Skipping java solution: $problem.java"
-		javac -encoding UTF-8 -d .jcp $problem.java > .jcp/compile.tmp 2>&1
-		if [ $? -eq 0 ]; then
-			echo -e "\e[32mSuccess compiling java solution\e[0m"
+	if [ $language = java ]; then
+		echo "compiling java solution: $problem.java"
+
+		compiledDate=$(date +%s -r .jcp/$problem.class 2> /dev/null || echo -n 0)
+		sourceDate=$(date +%s -r $problem.java)
+		if [ $compiledDate -gt $sourceDate ]; then
+			echo -e "\e[33mSkipped because java solution already compiled\e[0m"
 		else
-			echo -e "\e[31mFailed compiling java solution\e[0m"
-			failed=true
-			cat .jcp/compile.tmp >> .jcp/compile_error
+			javac -encoding UTF-8 -d .jcp $problem.java > .jcp/compile.tmp 2>&1
+			if [ $? -eq 0 ]; then
+				echo -e "\e[32mSuccess compiling java solution\e[0m"
+			else
+				echo -e "\e[31mFailed compiling java solution\e[0m"
+				failed=true
+				cat .jcp/compile.tmp >> .jcp/compile_error
+			fi
 		fi
 	fi
 
@@ -100,16 +133,18 @@ compile () {
 }
 
 run() {
-	if [[ $# -gt 1 && $2 = compile ]]; then
-		compile $1
+	language=c++
+	if [ $# -gt 1 ]; then
+		language=$2
 	fi
+	compile $1 $language
 
-	if [ -f .jcp/$1 ]; then
+	if [[ $language = c++ || $language = c || $language = pascal ]]; then
 		.jcp/$1
-	elif [ -f .jcp/$1.py ]; then
-		python .jcp/$1
-	elif [ -f .jcp/$1.class ]; then
-		java .jcp/$1
+	elif [ $language = python ]; then
+		python3 .jcp/$1
+	elif [ $language = java ]; then
+		java -classpath .jcp $1
 	else
 		echo -e "\e[31mCannot find executable file\e[0m"
 	fi
@@ -117,7 +152,11 @@ run() {
 
 testing() {
 	problem=$1
-	compile $problem
+	language=c++
+	if [ $# -gt 1 ]; then
+		language=$2
+	fi
+
 	files=( $(ls | grep -e "$problem.*in") )
 
 	for file in "${files[@]}"
@@ -125,7 +164,7 @@ testing() {
 		len=$(wc -m <<< $file)
 		outputfile=$(head -c $(($len-3)) <<< $file)out
 		
-		run $problem < $file > .jcp/$outputfile
+		run $problem $language < $file > .jcp/$outputfile
 
 		echo -n "Testing using inputfile [$file]: "
 		if [ -f $outputfile ]; then
@@ -157,15 +196,29 @@ elif [ $1 = "compile" ]; then
 		echo "Please specify problem name"
 		exit 1
 	fi
-    compile $2
+
+	if [ $# -gt 2 ]; then
+    	compile $2 $3
+	else
+		compile $2
+	fi
 elif [ $1 = "run" ]; then
 	if [ $# -lt 2 ]; then
 		echo "Please specify problem name"
 		exit 1
 	fi
-    run $2 compile
+
+	if [ $# -gt 2 ]; then
+    	run $2 $3
+	else
+		run $2
+	fi
 elif [ $1 = "test" ]; then
-	testing $2
+	if [ $# -gt 2 ]; then
+    	testing $2 $3
+	else
+		testing $2
+	fi
 else
     print_usage
     exit 1
