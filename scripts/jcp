@@ -18,17 +18,17 @@ compile () {
 	fi
 
 	failed=false
-	echo "compiling problem $problem"
+	echo "compiling problem $problem" 1>&2
 
 	if [ ! -d .jcp ]; then
-		echo "Creating jcp directory"
+		echo "Creating jcp directory" 1>&2
 		mkdir .jcp
 		if [ ! -d .jcp ]; then
-			echo "Cannot creating .jcp directory, aborted"
+			echo "Cannot creating .jcp directory, aborted" 1>&2
 			exit 1
 		fi
 	fi
-	echo "" > .jcp/compile_error
+	echo "" > .jcp/compile_error 1>&2
 
 	if [[ $language = c++ ]]; then
 		if [ -f $problem.cpp ]; then
@@ -39,18 +39,18 @@ compile () {
 			filename=$problem.c++
 		fi
 
-		echo "compiling c++ solution: $filename"
+		echo "compiling c++ solution: $filename" 1>&2
 		
 		compiledDate=$(date +%s -r .jcp/$problem 2> /dev/null || echo -n 0)
 		sourceDate=$(date +%s -r $filename)
 		if [ $compiledDate -gt $sourceDate ]; then
-			echo -e "\e[33mSkipped because c++ solution already compiled\e[0m"
+			echo -e "\e[33mSkipped because c++ solution already compiled\e[0m" 1>&2
 		else
 			g++ $filename -Wall -O2 -g -std=c++11 -static -pipe -o .jcp/$problem > .jcp/compile.tmp 2>&1
 			if [ $? -eq 0 ]; then
-				echo -e "\e[32mSuccess compiling c++ solution\e[0m"
+				echo -e "\e[32mSuccess compiling c++ solution\e[0m" 1>&2
 			else
-				echo -e "\e[31mFailed compiling c++ solution\e[0m"
+				echo -e "\e[31mFailed compiling c++ solution\e[0m" 1>&2
 				failed=true
 				cat .jcp/compile.tmp >> .jcp/compile_error
 			fi
@@ -58,18 +58,18 @@ compile () {
 	fi
 
 	if [ $language = c ]; then
-		echo "compiling c solution: $problem.c"
+		echo "compiling c solution: $problem.c" 1>&2
 
 		compiledDate=$(date +%s -r .jcp/$problem 2> /dev/null || echo -n 0)
 		sourceDate=$(date +%s -r $problem.c)
 		if [ $compiledDate -gt $sourceDate ]; then
-			echo -e "\e[33mSkipped because c solution already compiled\e[0m"
+			echo -e "\e[33mSkipped because c solution already compiled\e[0m" 1>&2
 		else
 			gcc $problem.c -Wall -O2 -g -static -pipe -o .jcp/$problem > .jcp/compile.tmp 2>&1
 			if [ $? -eq 0 ]; then
-				echo -e "\e[32mSuccess compiling c solution\e[0m"
+				echo -e "\e[32mSuccess compiling c solution\e[0m" 1>&2
 			else
-				echo -e "\e[31mFailed compiling c solution\e[0m"
+				echo -e "\e[31mFailed compiling c solution\e[0m" 1>&2
 				failed=true
 				cat .jcp/compile.tmp >> .jcp/compile_error
 			fi
@@ -77,18 +77,18 @@ compile () {
 	fi
 
 	if [ $language = pascal ]; then
-		echo "compiling pascal solution: $problem.pas"
+		echo "compiling pascal solution: $problem.pas" 1>&2
 
 		compiledDate=$(date +%s -r .jcp/$problem 2> /dev/null || echo -n 0)
 		sourceDate=$(date +%s -r $problem.pas)
 		if [ $compiledDate -gt $sourceDate ]; then
-			echo -e "\e[33mSkipped because pascal solution already compiled\e[0m"
+			echo -e "\e[33mSkipped because pascal solution already compiled\e[0m" 1>&2
 		else
 			fpc -viwn -O2 -Sg -XS -o.jcp/$problem $problem.pas > .jcp/compile.tmp 2>&1
 			if [ $? -eq 0 ]; then
-				echo -e "\e[32mSuccess compiling pascal solution\e[0m"
+				echo -e "\e[32mSuccess compiling pascal solution\e[0m" 1>&2
 			else
-				echo -e "\e[31mFailed compiling pascal solution\e[0m"
+				echo -e "\e[31mFailed compiling pascal solution\e[0m" 1>&2
 				failed=true
 				cat .jcp/compile.tmp >> .jcp/compile_error
 			fi
@@ -96,30 +96,30 @@ compile () {
 	fi
 
 	if [ $language = python ]; then
-		echo "skipping python solution: $problem.py"
+		echo "skipping python solution: $problem.py" 1>&2
 		cp $problem.py .jcp/$problem.py > .jcp/compile.tmp 2>&1
 		if [ $? -eq 0 ]; then
-			echo -e "\e[32mSuccess copying python solution\e[0m"
+			echo -e "\e[32mSuccess copying python solution\e[0m" 1>&2
 		else
-			echo -e "\e[31mFailed copying python solution\e[0m"
+			echo -e "\e[31mFailed copying python solution\e[0m" 1>&2
 			failed=true
 			cat .jcp/compile.tmp >> .jcp/compile_error
 		fi
 	fi
 
 	if [ $language = java ]; then
-		echo "compiling java solution: $problem.java"
+		echo "compiling java solution: $problem.java" 1>&2
 
 		compiledDate=$(date +%s -r .jcp/$problem.class 2> /dev/null || echo -n 0)
 		sourceDate=$(date +%s -r $problem.java)
 		if [ $compiledDate -gt $sourceDate ]; then
-			echo -e "\e[33mSkipped because java solution already compiled\e[0m"
+			echo -e "\e[33mSkipped because java solution already compiled\e[0m" 1>&2
 		else
 			javac -encoding UTF-8 -d .jcp $problem.java > .jcp/compile.tmp 2>&1
 			if [ $? -eq 0 ]; then
-				echo -e "\e[32mSuccess compiling java solution\e[0m"
+				echo -e "\e[32mSuccess compiling java solution\e[0m" 1>&2
 			else
-				echo -e "\e[31mFailed compiling java solution\e[0m"
+				echo -e "\e[31mFailed compiling java solution\e[0m" 1>&2
 				failed=true
 				cat .jcp/compile.tmp >> .jcp/compile_error
 			fi
@@ -127,9 +127,9 @@ compile () {
 	fi
 
 	if [ $failed = true ]; then
-		echo -ne "\e[31m"
-		cat .jcp/compile_error
-		echo -e "\e[0m"
+		echo -ne "\e[31m" 1>&2
+		cat .jcp/compile_error 1>&2
+		echo -e "\e[0m" 1>&2
 	fi
 }
 
@@ -166,7 +166,7 @@ testing() {
 		outputfile=$(head -c $(($len-3)) <<< $file)out
 		
 		run $problem $language < $file > .jcp/$outputfile
-
+		
 		echo -n "Testing using inputfile [$file]: "
 		if [ -f $outputfile ]; then
 			diff $outputfile .jcp/$outputfile
