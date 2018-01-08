@@ -1,0 +1,14 @@
+10
+1 2 3 3 5 5 7 7 8
+0 0 0 0 1 1 1 1 0 0
+10
+pow 3
+get 1
+pow 9
+get 1
+get 1
+get 8
+pow 8
+pow 4
+get 10
+pow 2
