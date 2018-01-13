@@ -19,10 +19,9 @@ pair<int,int> dfs(int node) {
     return make_pair(-1, -1);
 }
 
-bool toposort(int start, int n, int* id) {
-    int* tid = (int*) malloc(n * sizeof(int));
-    memcpy(tid, id, n * sizeof(int));
-
+int tid[500];
+bool toposort(int start, int n) {
+    memcpy(tid, id, sizeof id);
     queue<int> q; q.push(start); tid[start] = 0;
     while (!q.empty()) {
         int t = q.front(); q.pop(); n--;
@@ -30,7 +29,6 @@ bool toposort(int start, int n, int* id) {
             if (--tid[v] == 0)
                 q.push(v);
     }
-    free(tid);
     return n <= 0;
 }
 
@@ -46,19 +44,20 @@ int main() {
     for (int i = 0; i < n; i++)
         if (id[i] == 0)
             q.push(i);
+    int cnt = n;
     while (!q.empty()) {
         int t = q.front(); q.pop();
-        n--;
+        cnt--;
         for (int v : adj[t])
             if (--id[v] == 0)
                 q.push(v);
     }
-    if (n == 0) {
+    if (cnt == 0) {
         printf("YES\n");
         return 0;
     }
     for (int i = 0; i < n; i++)
-        if (id[i] == 1 && toposort(i, n, id)) {
+        if (id[i] == 1 && toposort(i, cnt)) {
             printf("YES\n");
             return 0;
         }
