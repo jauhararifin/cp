@@ -23,11 +23,22 @@ public:
         this->updateNode = updateNode;
         this->joinNode = joinNode;
 
-        needUpdate.resize(4*n+1, 0);
-        stree.resize(4*n+1, defaultNode);
-        utree.resize(4*n+1, defaultUpdate);
+        needUpdate = new bool[4*n+1];
+        void* streeP = malloc((4*n+1) * sizeof(T)); stree = (T*) streeP;
+        void* utreeP = malloc((4*n+1) * sizeof(U)); utree = (U*) utreeP;
+        for (int i = 0; i < 4*n+1; i++) {
+            needUpdate[i] = 0;
+            memcpy(stree + i, &defaultNode, sizeof(defaultNode));
+            memcpy(utree + i, &defaultUpdate, sizeof(defaultUpdate));
+        }
 
         init_segment_tree(1, 0, n-1, arr);
+    }
+
+    ~segment_tree() {
+        delete [] needUpdate;
+        delete [] stree;
+        delete [] utree;
     }
 
     void update(int left, int right, U val) {
@@ -43,9 +54,9 @@ public:
     }
 
     int n;
-    vector<bool> needUpdate;
-    vector<T> stree;
-    vector<U> utree;
+    bool* needUpdate;
+    T* stree;
+    U* utree;
     T defaultNode;
     U defaultUpdate;
     U (*joinUpdate)(U, U);
