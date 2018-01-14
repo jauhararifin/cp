@@ -22,8 +22,8 @@ public:
         this->updateNode = updateNode;
         this->joinNode = joinNode;
 
-        memset(needUpdate, 0, sizeof needUpdate);
-        memset(utree, 0, sizeof utree);
+        // memset(needUpdate, 0, sizeof needUpdate);
+        // memset(utree, 0, sizeof utree);
         
         init_segment_tree(1, 0, n-1, arr);
     }
