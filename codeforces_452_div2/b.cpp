@@ -11,7 +11,7 @@ bool is_possible(pair<int,int> mon, int m) {
     else if (m == 30)
         return mon.first == 3 || mon.first == 5 || mon.first == 8 || mon.first == 10;
     else if (mon.first == 1)
-        return (m == 28 && !mon.second) || (m == 29 && mon.second);
+        return (m == 28 && mon.second != 0) || (m == 29 && mon.second == 0);
     return 0;
 }
 
@@ -25,14 +25,14 @@ int main() {
         possible.insert(make_pair(i,0));
         possible.insert(make_pair(i,1));
         possible.insert(make_pair(i,2));
+        possible.insert(make_pair(i,3));
     }
     for (int i = 0; i < n; i++) {
         int x = a[i];
         vector<pair<int,int> > v;
         for (pair<int,int> p : possible) {
-            pair<int,int> temp = make_pair(p.first + i, p.second % 2);
-            if (p.first + i >= 12)
-                temp.second = p.second == 0 || p.second == 1 ? !p.second : 1;
+            pair<int,int> temp = make_pair(p.first + i, p.second + (p.first + i)/12);
+            temp.second %= 4;
             if (!is_possible(temp, x))
                 v.push_back(p);
         }
