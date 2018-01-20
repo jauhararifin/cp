@@ -2,31 +2,33 @@
 
 using namespace std;
 
-struct integer {
+class integer {
+public:
   static const int base = 1000000000;
   static const int base_digits = 9; 
   vector<int> a;
   int sign;
-  int size(){
-    if(a.empty())return 0;
-    int ans=(a.size()-1)*base_digits;
-    int ca=a.back();
+
+  int size() {
+    if (a.empty()) return 0;
+    int ans = (a.size()-1) * base_digits;
+    int ca = a.back();
     while(ca)
-      ans++,ca/=10;
+      ans++, ca /= 10;
     return ans;
   }
+
   integer operator ^(const integer &v){
-    integer ans=1,a=*this,b=v;
-    while(!b.isZero()){
+    integer ans = 1, a = *this, b = v;
+    while(!b.isZero()) {
       if(b%2)
-	ans*=a;
-      a*=a,b/=2;
+        ans*=a;
+      a *= a, b /= 2;
     }
     return ans;
   }
-  integer() :
-    sign(1) {
-  }
+
+  integer() : sign(1) {}
  
   integer(long long v) {
     *this = v;
@@ -54,12 +56,12 @@ struct integer {
       integer res = v;
  
       for (int i = 0, carry = 0; i < (int) max(a.size(), v.a.size()) || carry; ++i) {
-	if (i == (int) res.a.size())
-	  res.a.push_back(0);
-	res.a[i] += carry + (i < (int) a.size() ? a[i] : 0);
-	carry = res.a[i] >= base;
-	if (carry)
-	  res.a[i] -= base;
+	      if (i == (int) res.a.size())
+	        res.a.push_back(0);
+	      res.a[i] += carry + (i < (int) a.size() ? a[i] : 0);
+	      carry = res.a[i] >= base;
+	      if (carry)
+	        res.a[i] -= base;
       }
       return res;
     }
@@ -69,15 +71,15 @@ struct integer {
   integer operator-(const integer &v) const {
     if (sign == v.sign) {
       if (abs() >= v.abs()) {
-	integer res = *this;
-	for (int i = 0, carry = 0; i < (int) v.a.size() || carry; ++i) {
-	  res.a[i] -= carry + (i < (int) v.a.size() ? v.a[i] : 0);
-	  carry = res.a[i] < 0;
-	  if (carry)
-	    res.a[i] += base;
-	}
-	res.trim();
-	return res;
+	      integer res = *this;
+	      for (int i = 0, carry = 0; i < (int) v.a.size() || carry; ++i) {
+	        res.a[i] -= carry + (i < (int) v.a.size() ? v.a[i] : 0);
+	        carry = res.a[i] < 0;
+	        if (carry)
+	          res.a[i] += base;
+	      }
+	      res.trim();
+	      return res;
       }
       return -(v - *this);
     }
@@ -89,7 +91,7 @@ struct integer {
       sign = -sign, v = -v;
     for (int i = 0, carry = 0; i < (int) a.size() || carry; ++i) {
       if (i == (int) a.size())
-	a.push_back(0);
+        a.push_back(0);
       long long cur = a[i] * (long long) v + carry;
       carry = (int) (cur / base);
       a[i] = (int) (cur % base);
@@ -103,7 +105,8 @@ struct integer {
     return res;
   }
  
-  friend pair<integer, integer> divmod(const integer &a1, const integer &b1) {
+  pair<integer, integer> divmod(const integer &b1) const {
+    const integer& a1 = *this;
     int norm = base / (b1.a.back() + 1);
     integer a = a1.abs() * norm;
     integer b = b1.abs() * norm;
@@ -118,7 +121,7 @@ struct integer {
       int d = ((long long) base * s1 + s2) / b.a.back();
       r -= b * d;
       while (r < 0)
-	r += b, --d;
+	      r += b, --d;
       q.a[i] = d;
     }
  
@@ -130,11 +133,11 @@ struct integer {
   }
  
   integer operator/(const integer &v) const {
-    return divmod(*this, v).first;
+    return divmod(v).first;
   }
  
   integer operator%(const integer &v) const {
-    return divmod(*this, v).second;
+    return divmod(v).second;
   }
  
   void operator/=(int v) {
@@ -183,7 +186,7 @@ struct integer {
       return a.size() * sign < v.a.size() * v.sign;
     for (int i = a.size() - 1; i >= 0; i--)
       if (a[i] != v.a[i])
-	return a[i] * sign < v.a[i] * sign;
+	      return a[i] * sign < v.a[i] * sign;
     return false;
   }
  
@@ -246,13 +249,13 @@ struct integer {
     int pos = 0;
     while (pos < (int) s.size() && (s[pos] == '-' || s[pos] == '+')) {
       if (s[pos] == '-')
-	sign = -sign;
+	      sign = -sign;
       ++pos;
     }
     for (int i = s.size() - 1; i >= pos; i -= base_digits) {
       int x = 0;
       for (int j = max(pos, i - base_digits + 1); j <= i; j++)
-	x = x * 10 + s[j] - '0';
+      	x = x * 10 + s[j] - '0';
       a.push_back(x);
     }
     trim();
@@ -286,9 +289,9 @@ struct integer {
       cur += a[i] * p[cur_digits];
       cur_digits += old_digits;
       while (cur_digits >= new_digits) {
-	res.push_back(int(cur % p[new_digits]));
-	cur /= p[new_digits];
-	cur_digits -= new_digits;
+      	res.push_back(int(cur % p[new_digits]));
+      	cur /= p[new_digits];
+      	cur_digits -= new_digits;
       }
     }
     res.push_back((int) cur);
@@ -304,8 +307,8 @@ struct integer {
     vll res(n + n);
     if (n <= 32) {
       for (int i = 0; i < n; i++)
-	for (int j = 0; j < n; j++)
-	  res[i + j] += a[i] * b[j];
+      	for (int j = 0; j < n; j++)
+      	  res[i + j] += a[i] * b[j];
       return res;
     }
  
