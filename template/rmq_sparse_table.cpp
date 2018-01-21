@@ -2,92 +2,71 @@
 
 using namespace std;
 
-namespace rmq {
+template<typename T>
+class sparse_table {
+public:
+    sparse_table(const vector<T>& arr, T (*merge)(T,T)) {
+        n = (int) arr.size();
+        this->merge = merge;
+        fill_sparse_table(arr.data());
+    }
 
-    template<typename T>
-    struct sparse_table {
-        int n;
-        int** st;
-        T* a;
-        bool store_minimum;
-    };
+    sparse_table(int n, const T* arr, T (*merge)(T,T)) {
+        this->n = n;
+        this->merge = merge;
+        fill_sparse_table(arr);
+    }
 
-    // sparse table store index
-    template<typename T>
-    sparse_table<T> generate_sparse_table(const vector<T>& arr, const bool store_minimum) {
-        sparse_table<T> st;
-        int n = (int) arr.size();
-        st.n = n;
-        st.a = new T[n];
+    ~sparse_table() {
         for (int i = 0; i < n; i++)
-            st.a[i] = arr[i];
-        st.st = new int*[n];
-        for (int i = 0; i < n; i++) {
-            st.st[i] = new int[(int)log2(n-i)+1];
-            st.st[i][0] = i;
-        }
-        st.store_minimum = store_minimum;
-
-        for (int j = 1; (1<<j) <= n; j++)
-            for (int i = 0; i + (1<<j) - 1 < n; i++) {
-                pair<T,int> a = make_pair(st.a[st.st[i][j-1]], st.st[i][j-1]);
-                pair<T,int> b = make_pair(st.a[st.st[i+(1<<(j-1))][j-1]], st.st[i+(1<<(j-1))][j-1]);
-                if (store_minimum)
-                    st.st[i][j] = a.first < b.first ? a.second : b.second;
-                else
-                    st.st[i][j] = a.first > b.first ? a.second : b.second;
-            }
-        
-        return st;
-    }
-
-    template<typename T>
-    sparse_table<T> generate_sparse_table(const vector<T>& arr) { // default sparse table store minimum
-        return generate_sparse_table(arr, true);
-    }
-
-    template<typename T>
-    sparse_table<T> generate_sparse_table(int n, T* arr) {
-        vector<T> v; for (int i = 0; i < n; i++) v.push_back(arr[i]);
-        return generate_sparse_table(v);
+            free(st[i]);
+        delete [] st;
     }
 
     // pair<index,value>, query on [from,to)
-    template<typename T>
-    pair<int,T> query_sparse_table(sparse_table<T> st, int from, int to) {
+    T query(int from, int to) {
         to--;
         int k = (int) log2(to-from+1);
-        pair<int,T> a = make_pair(st.st[from][k], st.a[st.st[from][k]]);
-        pair<int,T> b = make_pair(st.st[to-(1<<k)+1][k], st.a[st.st[to-(1<<k)+1][k]]);
-        if (st.store_minimum)
-            return a.second <= b.second ? a : b;
-        else
-            return a.second >= b.second ? a : b;
+        T _a = st[from][k];
+        T _b = st[to-(1<<k)+1][k];
+        return merge(_a, _b);
     }
 
-    template<typename T>
-    void delete_sparse_table(sparse_table<T> st) {
-        for (int i = 0; i < st.n; i++)
-            delete [] st.st[i];
-        delete [] st.st;
-        delete [] st.a;
+    int n;
+    T** st;
+    T (*merge)(T,T);
+private:
+    void fill_sparse_table(const T* arr) {
+        st = new T*[n];
+        for (int i = 0; i < n; i++) {
+            st[i] =  (T*) malloc((log2(n-i)+1) * sizeof(T));
+            st[i][0] = arr[i];
+        }
+
+        for (int j = 1; (1<<j) <= n; j++)
+            for (int i = 0; i + (1<<j) - 1 < n; i++) {
+                T _a = st[i][j-1];
+                T _b = st[i+(1<<(j-1))][j-1];
+                st[i][j] = merge(_a, _b);
+            }
     }
-}
+};
 
 int n,a[100000],q,x,y;
+
+int cmp(int a, int b) { return min(a,b); }
 
 int main() {
     scanf("%d", &n);
     for (int i = 0; i < n; i++)
         scanf("%d", a + i);
-    rmq::sparse_table<int> st = rmq::generate_sparse_table(n, a);
+    sparse_table<int> st(n, a, cmp);
 
     scanf("%d", &q);
     while (q--) {
         scanf("%d%d", &x, &y);
-        printf("%d\n", rmq::query_sparse_table(st, x, y + 1).second);
+        printf("%d\n", st.query(x, y + 1));
     }
 
-    rmq::delete_sparse_table(st);
     return 0;
 }
