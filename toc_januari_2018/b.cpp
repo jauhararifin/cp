@@ -9,7 +9,7 @@ vector<int> adj[100000];
 long long ans;
 
 // first total
-// second special
+// second not special
 pair<long long,long long> solve(int node, int before) {
     if (special[node]) {
         long long t = 1;
@@ -18,18 +18,18 @@ pair<long long,long long> solve(int node, int before) {
                 t = ((t % mod) * ((1LL + solve(x, node).first) % mod)) % mod;
         ans = (ans + (t % mod)) % mod;
         // printf("%d -> %lld %lld\n", node, t, t);
-        return make_pair(t, t);
+        return make_pair(t, 0);
     } else {
         long long total = 1LL;
         long long nonspc = 1LL;
         for (int x : adj[node])
             if (x != before) {
                 pair<long long,long long> r = solve(x, node);
-                total = (total * ((1LL + r.first) % mod)) % mod;
-                nonspc = (nonspc * ((1LL + (r.first - r.second)) % mod)) % mod;
+                total = ((total % mod) * ((1LL + r.first) % mod)) % mod;
+                nonspc = ((nonspc % mod) * ((1LL + r.second) % mod)) % mod;
             }
-        ans = (ans + total - nonspc) % mod;
-        return make_pair(total % mod, (total - nonspc) % mod);
+        ans = ((ans + total - nonspc) % mod + mod) % mod;
+        return make_pair(total % mod, nonspc % mod);
     }
 }
 
