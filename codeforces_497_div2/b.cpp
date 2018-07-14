@@ -13,7 +13,9 @@ int main() {
       printf("NO\n");
       return 0;
     }
-    c = max((a <= c ? a : c), (b <= c ? b : c));
+    if (a > c) c = b;
+    else if (b > c) c = a;
+    else c = max(a,b);
   }
   printf("YES\n");
   return 0;
