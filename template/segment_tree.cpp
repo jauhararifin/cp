@@ -15,33 +15,17 @@ public:
     segment_tree(int n, T defaultNode, U defaultUpdate, U (*joinUpdate)(U, U), T (*updateNode)(T, U), T (*joinNode)(T, T)) {
         vector<T> temp;
         temp.resize(n, defaultNode);
-        segment_tree(temp, defaultNode, defaultUpdate, joinUpdate, updateNode, joinNode);
+        init(temp, defaultNode, defaultUpdate, joinUpdate, updateNode, joinNode);
     }
 
     segment_tree(vector<T> arr, T defaultNode, U defaultUpdate, U (*joinUpdate)(U, U), T (*updateNode)(T, U), T (*joinNode)(T, T)) {
-        this->n = arr.size();
-        this->defaultNode = defaultNode;
-        this->defaultUpdate = defaultUpdate;
-        this->joinUpdate = joinUpdate;
-        this->updateNode = updateNode;
-        this->joinNode = joinNode;
-
-        needUpdate = new bool[4*n+1];
-        void* streeP = malloc((4*n+1) * sizeof(T)); stree = (T*) streeP;
-        void* utreeP = malloc((4*n+1) * sizeof(U)); utree = (U*) utreeP;
-        for (int i = 0; i < 4*n+1; i++) {
-            needUpdate[i] = 0;
-            memcpy(stree + i, &defaultNode, sizeof(defaultNode));
-            memcpy(utree + i, &defaultUpdate, sizeof(defaultUpdate));
-        }
-
-        init_segment_tree(1, 0, n-1, arr);
+        init(arr, defaultNode, defaultUpdate, joinUpdate, updateNode, joinNode);
     }
 
     ~segment_tree() {
         delete [] needUpdate;
-        delete [] stree;
-        delete [] utree;
+        free(stree);
+        free(utree);
     }
 
     void update(int left, int right, U val) {
@@ -74,6 +58,26 @@ private:
             rec_debug(2*node, left, (left+right)/2, level+1);
             rec_debug(2*node+1, (left+right)/2+1, right, level+1);
         }
+    }
+
+    void init(vector<T> arr, T defaultNode, U defaultUpdate, U (*joinUpdate)(U, U), T (*updateNode)(T, U), T (*joinNode)(T, T)) {
+        this->n = arr.size();
+        this->defaultNode = defaultNode;
+        this->defaultUpdate = defaultUpdate;
+        this->joinUpdate = joinUpdate;
+        this->updateNode = updateNode;
+        this->joinNode = joinNode;
+
+        needUpdate = new bool[4*n+1];
+        void* streeP = malloc((4*n+1) * sizeof(T)); stree = (T*) streeP;
+        void* utreeP = malloc((4*n+1) * sizeof(U)); utree = (U*) utreeP;
+        for (int i = 0; i < 4*n+1; i++) {
+            needUpdate[i] = 0;
+            memcpy(stree + i, &defaultNode, sizeof(defaultNode));
+            memcpy(utree + i, &defaultUpdate, sizeof(defaultUpdate));
+        }
+
+        init_segment_tree(1, 0, n-1, arr);
     }
 
     T init_segment_tree(int node, int left, int right, vector<T>& arr) {
@@ -142,5 +146,4 @@ private:
 };
 
 int main() {
-    return 0;
 }
