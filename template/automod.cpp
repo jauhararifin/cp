@@ -9,36 +9,41 @@ class automod {
 public:
     automod():num(0){}
     automod(T x):num(x % mod){}
+    automod(automod<T,mod>& m):num(m.num){}
     
-    inline automod<T,mod> operator+(automod<T,mod> const& a) {
-        return {(0LL+a.num+num) % mod};
-    }
-
-    inline automod<T,mod> operator-(automod<T,mod> const& a) {
-        return {(((0LL+num-a.num) % mod) + mod) % mod};
-    }
-
-    inline automod<T,mod> operator*( automod<T,mod> const& a) {
-        return {(1LL*a.num*num) % mod};
-    }
-
-    inline automod<T,mod>& operator=( automod<T,mod> const& a) {
+    inline automod<T,mod>& operator=(const automod<T,mod>& a) {
         num = a.num % mod;
         return *this;
     }
 
-    inline automod<T,mod>& operator*=( automod<T,mod> const& a) {
-        num = (1LL*a.num*num) % mod;
-        return *this;
+    inline bool operator==(const automod<T,mod>& a) const {
+        return num == a.num;
+    }
+    
+    inline automod<T,mod> operator+(const automod<T,mod>& a) const {
+        return {(0LL+a.num+num) % mod};
     }
 
-    inline automod<T,mod>& operator+=( automod<T,mod> const& a) {
+    inline automod<T,mod>& operator+=(const automod<T,mod>& a) {
         num = (0LL+a.num+num) % mod;
         return *this;
     }
 
-    inline automod<T,mod>& operator-=( automod<T,mod> const& a) {
+    inline automod<T,mod> operator-(const automod<T,mod>& a) const {
+        return {(((0LL+num-a.num) % mod) + mod) % mod};
+    }
+    
+    inline automod<T,mod>& operator-=(const automod<T,mod>& a) {
         num = (((0LL+num-a.num) % mod) + mod) % mod;
+        return *this;
+    }
+
+    inline automod<T,mod> operator*(const automod<T,mod>& a) {
+        return {(1LL*a.num*num) % mod};
+    }
+
+    inline automod<T,mod>& operator*=(const automod<T,mod>& a) {
+        num = (1LL*a.num*num) % mod;
         return *this;
     }
 
