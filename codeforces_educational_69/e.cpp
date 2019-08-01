@@ -2,12 +2,72 @@
 
 using namespace std;
 
+template<typename T, long long mod>
+class automod {
+public:
+    automod():num(0){}
+    automod(T x):num(x % mod){}
+    
+    inline automod<T,mod> operator+(automod<T,mod> const& a) {
+        return {(0LL+a.num+num) % mod};
+    }
+
+    inline automod<T,mod> operator-(automod<T,mod> const& a) {
+        return {(((0LL+num-a.num) % mod) + mod) % mod};
+    }
+
+    inline automod<T,mod> operator*( automod<T,mod> const& a) {
+        return {(1LL*a.num*num) % mod};
+    }
+
+    inline automod<T,mod>& operator=( automod<T,mod> const& a) {
+        num = a.num % mod;
+        return *this;
+    }
+
+    inline automod<T,mod>& operator*=( automod<T,mod> const& a) {
+        num = (1LL*a.num*num) % mod;
+        return *this;
+    }
+
+    inline automod<T,mod>& operator+=( automod<T,mod> const& a) {
+        num = (0LL+a.num+num) % mod;
+        return *this;
+    }
+
+    inline automod<T,mod>& operator-=( automod<T,mod> const& a) {
+        num = (((0LL+num-a.num) % mod) + mod) % mod;
+        return *this;
+    }
+
+    template<typename U, long long m>
+    friend ostream &operator << (ostream &out, const automod<U,m> &c);
+
+    template<typename U, long long m>
+    friend istream &operator >> (istream &in,  automod<U,m> &c);
+private:
+    T num;
+};
+
+template<typename T, long long mod>
+ostream& operator<<(ostream &out, const automod<T,mod> &c) {
+    out << c.num;
+    return out;
+}
+
+template<typename T, long long mod>
+istream& operator>>(istream &in, automod<T,mod> &c) {
+    in >> c.num;
+    c.num = ((c.num % mod) + mod) % mod;
+    return in;
+}
+
 const long long mod = 1e9+7;
 
 int n,v[200000],m[200000];
-long long s[200000];
+automod<long long, mod> s[200000];
 pair<int,int> p[200000];
-unordered_map<int,vector<pair<int, long long> > > mp;
+unordered_map<int,vector<pair<int, automod<long long, mod> > > > mp;
 
 bool cmp(pair<int,int> a, pair<int,int> b) { return a.second < b.second; }
 
@@ -52,28 +112,22 @@ int main() {
             if (mp[v[i]].size() == 0)
                 mp[v[i]].push_back({i,s[i]});
             else
-                mp[v[i]].push_back({i,(mp[v[i]].back().second + s[i]) % mod});
+                mp[v[i]].push_back({i, mp[v[i]].back().second + s[i]});
         } else {
             v[i] = p[i].second - p[i].first;
             s[i] = 1LL;
             if (mp[v[i]].size() == 0)
                 mp[v[i]].push_back({i,1LL});
             else
-                mp[v[i]].push_back({i,(mp[v[i]].back().second + 1LL) % mod});
+                mp[v[i]].push_back({i, mp[v[i]].back().second + 1LL});
         }
-
-        // printf("mp[%d] = ", v[i]);
-        // for (auto x : mp[v[i]]) cout<<"("<<x.first<<" "<<x.second<<") ";
-        // cout<<endl;
 
         m[i] = max(i > 0 ? m[i-1] : 0, v[i]);
     }
 
-    // for (int i = 0; i < n; i++) printf("(%d %d) v = %d, m = %d, s = %I64, diff = %d\n", p[i].first, p[i].second, v[i], m[i], s[i], p[i].second - v[i]);
-
     int h = p[n-1].second - v[n-1];
     int lo = p[n-1].first;
-    long long res = 0;
+    automod<long long, mod> res = 0;
     for (int i = n-1; i >= 0; i--) {
         if (p[i].second <= lo)
             break;
@@ -81,11 +135,10 @@ int main() {
             h = p[i].second - v[i];
             res = s[i];
         } else if (h == p[i].second - v[i])
-            res = (res + s[i]) % mod;
+            res = res + s[i];
         lo = max(lo, p[i].first);
-        // printf("--> (%d %d) v = %d, %d %I64d\n", p[i].first, p[i].second, v[i], h, res);
     }
-    cout<<(res % mod)<<endl;
+    cout<<res<<endl;
 
     return 0;
 }
