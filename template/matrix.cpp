@@ -5,6 +5,11 @@ using namespace std;
 template<typename T>
 class square_matrix {
 public:
+    square_matrix() {
+        n = 1;
+        arr = new T[1];
+    }
+
     square_matrix(int size):n(size) {
         arr = new T[n*n];
     }
@@ -16,19 +21,26 @@ public:
             arr[i] = m.arr[i];
     }
 
-    ~square_matrix() {
-        delete [] arr;    
+    square_matrix(square_matrix<T>&& m) {
+        n = m.n;
+        arr = m.arr;
+        m.arr = 0;
+        m.n = 0;
     }
 
-    square_matrix<T>& operator=(const square_matrix<T>& a) {
-        if (this == &a) return *this;
-        if (n != a.n) {
-            n = a.n;
-            delete [] arr;
-            arr = new T[n*n];
-        }
-        for (int i = 0; i < n*n; i++)
-            arr[i] = a.arr[i];
+    ~square_matrix() {
+        if (arr) delete [] arr;
+    }
+
+    square_matrix<T>& resize(int size) {
+        delete [] arr;
+        n = size;
+        arr = new T[n*n];
+    }
+
+    square_matrix<T>& operator=(square_matrix<T> a) {
+        swap(arr, a.arr);
+        swap(n, a.n);
         return *this;
     }
 
@@ -72,7 +84,6 @@ public:
     }
 
     square_matrix<T> operator*(const square_matrix<T>& a) const {
-        return naive_mul(a);
         if (n <= 512) return naive_mul(a);
         
         int s = n;
@@ -86,6 +97,17 @@ public:
     square_matrix<T> operator*(const T& scalar) const {
         square_matrix<T> res(n);
         for (int i = 0; i < n*n; i++) res.arr[i] = arr[i] * scalar;
+        return res;
+    }
+
+    vector<T> operator*(const vector<T>& v) const {
+        assert(n == (int) v.size());
+        vector<T> res(n);
+        for (int i = 0; i < n; i++) {
+            res[i] = arr[i*n] * v[0];
+            for (int j = 1; j < n; j++)
+                res[i] += arr[i*n+j] * v[j];
+        }
         return res;
     }
 
@@ -238,7 +260,7 @@ int main() {
     cout<<"2*m"<<endl<<2*m<<endl;
 
 
-    for (int n = 2; n <= 10; n+=1) {
+    for (int n = 2; n <= 32; n+=n) {
         square_matrix<int> x(n);
         for (int i = 0; i < n; i++)
             for (int j = 0; j < n; j++)
@@ -247,7 +269,7 @@ int main() {
         square_matrix<int> id = identity<int>(n);
         clock_t t; 
         t = clock(); 
-        for (int i = 0; i < 30000; i++)
+        for (int i = 0; i < 100000; i++)
             id *= x;
         t = clock() - t;
         double time_taken = ((double)t)/CLOCKS_PER_SEC; // in seconds 
