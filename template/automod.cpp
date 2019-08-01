@@ -7,43 +7,66 @@ using namespace std;
 template<typename T, long long mod>
 class automod {
 public:
-    automod():num(0){}
-    automod(T x):num(x % mod){}
-    automod(automod<T,mod>& m):num(m.num){}
+    automod():num(0) {}
+    automod(T x) {
+        if (x > mod) num = x % mod;
+        else if (x < -mod) num = (x % mod) + mod;
+        else num = x;
+    }
+    automod(const automod<T,mod>& m):num(m.num) {}
     
-    inline automod<T,mod>& operator=(const automod<T,mod>& a) {
-        num = a.num % mod;
+    automod<T,mod>& operator=(const automod<T,mod>& a) {
+        num = a.num;
         return *this;
     }
 
-    inline bool operator==(const automod<T,mod>& a) const {
+    automod<T,mod>& operator=(const T& x) {
+        num = x;
+        if (num > mod) num %= mod;
+        else if (num < -mod) num = (num % mod) + mod;
+        return *this;
+    }
+
+    bool operator==(const automod<T,mod>& a) const {
         return num == a.num;
     }
     
-    inline automod<T,mod> operator+(const automod<T,mod>& a) const {
-        return {(0LL+a.num+num) % mod};
+    automod<T,mod> operator+(const automod<T,mod>& a) const {
+        long long x = 0LL+num+a.num;
+        if (x > mod) x %= mod;
+        return {x};
     }
 
-    inline automod<T,mod>& operator+=(const automod<T,mod>& a) {
-        num = (0LL+a.num+num) % mod;
+    automod<T,mod>& operator+=(const automod<T,mod>& a) {
+        long long temp = 0LL+num+a.num;
+        if (temp > mod) temp %= mod;
+        num = temp;
         return *this;
     }
 
-    inline automod<T,mod> operator-(const automod<T,mod>& a) const {
-        return {(((0LL+num-a.num) % mod) + mod) % mod};
+    automod<T,mod> operator-(const automod<T,mod>& a) const {
+        long long temp = 0LL+num-a.num;
+        if (temp < -mod) temp = (temp % mod) + mod;
+        return {temp};
     }
     
-    inline automod<T,mod>& operator-=(const automod<T,mod>& a) {
-        num = (((0LL+num-a.num) % mod) + mod) % mod;
+    automod<T,mod>& operator-=(const automod<T,mod>& a) {
+        long long temp = 0LL+num-a.num;
+        if (temp < -mod) temp = (temp % mod) + mod;
+        num = temp;
         return *this;
     }
 
-    inline automod<T,mod> operator*(const automod<T,mod>& a) {
-        return {(1LL*a.num*num) % mod};
+    automod<T,mod> operator*(const automod<T,mod>& a) {
+        long long temp = 1LL*num*a.num;
+        if (temp > mod) temp %= mod;
+        return {temp};
     }
 
-    inline automod<T,mod>& operator*=(const automod<T,mod>& a) {
-        num = (1LL*a.num*num) % mod;
+    automod<T,mod>& operator*=(const automod<T,mod>& a) {
+        long long temp = 1LL*num*a.num;
+        if (temp > mod) temp %= mod;
+        num = temp;
         return *this;
     }
 
@@ -75,5 +98,12 @@ int main() {
     n += 10;
     n -= 7;
     cout<<n<<endl;
+
+    n = 32;
+    cout<<n<<endl;
+
+    n = -1;
+    cout<<n<<endl;
+    
     return 0;
 }
