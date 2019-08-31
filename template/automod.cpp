@@ -2,6 +2,8 @@
 
 using namespace std;
 
+#pragma region jauhar_template
+
 // when you are too lazy to write mod operation...
 
 template<typename T, long long mod>
@@ -91,6 +93,8 @@ istream& operator>>(istream &in, automod<T,mod> &c) {
     c.num = ((c.num % mod) + mod) % mod;
     return in;
 }
+
+#pragma endregion jauhar_template
 
 int main() {
     automod<int, 29> n(31);
