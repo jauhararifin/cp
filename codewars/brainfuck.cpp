@@ -642,6 +642,22 @@ void emit_msg(Context &ctx, const std::vector<Token> msgs) {
   }
 }
 
+// constrant: targetid != a && targetid != b. a and b will be modified
+void emit_internal_mul(Context &ctx, const size_t a, const size_t b,
+                       const size_t targetid) {
+  size_t t0 = alloc_temp(ctx, 1);
+
+  emit_internal_clear(ctx, targetid);
+  {
+    emit_internal_while_consume_begin(ctx, a);
+    emit_internal_copy(ctx, b, t0);
+    emit_internal_move(ctx, t0, false, targetid);
+    emit_internal_while_consume_end(ctx, a);
+  }
+
+  dealloc_temp(ctx, 1);
+}
+
 void emit_mul(Context &ctx, const Token &a, const Token &b,
               const Token &target) {
   std::string targetvar = std::get<std::string>(target.value);
@@ -653,20 +669,44 @@ void emit_mul(Context &ctx, const Token &a, const Token &b,
   print_expr(b);
   std::cerr << " -> " << targetvar << std::endl;
 
-  size_t t0 = alloc_temp(ctx, 3);
+  size_t t0 = alloc_temp(ctx, 2);
   size_t t1 = t0 + 1;
-  size_t t2 = t0 + 2;
   emit_internal_set(ctx, a, t0);
   emit_internal_set(ctx, b, t1);
-  emit_internal_clear(ctx, targetid);
-  {
-    emit_internal_while_consume_begin(ctx, t0);
-    emit_internal_copy(ctx, t1, t2);
-    emit_internal_move(ctx, t2, false, targetid);
-    emit_internal_while_consume_end(ctx, t0);
-  }
+  emit_internal_mul(ctx, t0, t1, targetid);
+  dealloc_temp(ctx, 2);
+}
 
-  dealloc_temp(ctx, 3);
+// constraint a and b modified. all vars are unique
+void emit_internal_divmod(Context &ctx, const size_t a, const size_t b,
+                          const size_t q, const size_t rem) {
+  size_t t0 = alloc_temp(ctx, 2);
+  size_t t1 = t0 + 1;
+
+  emit_internal_clear(ctx, q);
+  emit_internal_clear(ctx, rem);
+
+  {
+    // while tb <= ta begin
+    emit_internal_a_le_b(ctx, b, a, t1);
+    go_to(ctx, t1);
+    ctx.prog += "[";
+
+    // ta -= tb
+    emit_internal_copy(ctx, b, t0);
+    emit_internal_move(ctx, t0, true, a);
+
+    go_to(ctx, q);
+    ctx.prog += "+";
+
+    // while end
+    emit_internal_a_le_b(ctx, b, a, t1);
+    go_to(ctx, t1);
+    ctx.prog += "]";
+  }
+  emit_internal_copy(ctx, a, rem);
+
+  dealloc_temp(ctx, 2);
 }
 
 void emit_divmod(Context &ctx, const Token &a, const Token &b,
@@ -677,40 +717,16 @@ void emit_divmod(Context &ctx, const Token &a, const Token &b,
   std::string rvar = std::get<std::string>(remainder.value);
   size_t rid = ctx.variables[rvar];
 
-  size_t ta = alloc_temp(ctx, 5);
+  size_t ta = alloc_temp(ctx, 4);
   size_t tb = ta + 1;
   size_t tq = ta + 2;
-  size_t t0 = ta + 3;
-  size_t t1 = ta + 4;
-
-  emit_internal_clear(ctx, tq);
-  emit_internal_clear(ctx, rid);
-
+  size_t trem = ta + 3;
   emit_internal_set(ctx, a, ta);
   emit_internal_set(ctx, b, tb);
-
-  {
-    // while tb <= ta begin
-    emit_internal_a_le_b(ctx, tb, ta, t1);
-    go_to(ctx, t1);
-    ctx.prog += "[";
-
-    // ta -= tb
-    emit_internal_copy(ctx, tb, t0);
-    emit_internal_move(ctx, t0, true, ta);
-
-    go_to(ctx, tq);
-    ctx.prog += "+";
-
-    // while end
-    emit_internal_a_le_b(ctx, tb, ta, t1);
-    go_to(ctx, t1);
-    ctx.prog += "]";
-  }
-  emit_internal_copy(ctx, ta, rid);
+  emit_internal_divmod(ctx, ta, tb, tq, trem);
+  emit_internal_copy(ctx, trem, rid);
   emit_internal_copy(ctx, tq, qid);
-
-  dealloc_temp(ctx, 5);
+  dealloc_temp(ctx, 4);
 }
 
 void emit_div(Context &ctx, const Token &a, const Token &b,
@@ -841,6 +857,111 @@ void emit_cmp(Context &ctx, const Token &a, const Token &b,
   dealloc_temp(ctx, 5);
 }
 
+void emit_a2b(Context &ctx, const Token &a, const Token &b, const Token &c,
+              const Token &target) {
+  std::string varname = std::get<std::string>(target.value);
+  size_t targetid = ctx.variables[varname];
+
+  size_t ta = alloc_temp(ctx, 6);
+  size_t tb = ta + 1;
+  size_t tc = ta + 2;
+  size_t td = ta + 3;
+  size_t tpow = ta + 4;
+  size_t tx = ta + 5;
+
+  emit_internal_set(ctx, a, ta);
+  emit_internal_set(ctx, b, tb);
+  emit_internal_set(ctx, c, tc);
+  emit_internal_clear(ctx, td);
+
+  // ta -= 48
+  go_to(ctx, ta);
+  add_value(ctx, -48);
+  // tb -= 48
+  go_to(ctx, tb);
+  add_value(ctx, -48);
+  // tc -= 48
+  go_to(ctx, tc);
+  add_value(ctx, -48);
+
+  // td += tc
+  emit_internal_move(ctx, tc, false, td);
+
+  // tpow = 10
+  emit_internal_clear(ctx, tpow);
+  go_to(ctx, tpow);
+  add_value(ctx, 10);
+
+  // tx = tpow * tb
+  emit_internal_mul(ctx, tb, tpow, tx);
+  // td += tx
+  emit_internal_move(ctx, tx, false, td);
+
+  // tpow = 100
+  emit_internal_clear(ctx, tpow);
+  go_to(ctx, tpow);
+  add_value(ctx, 100);
+
+  // tx = tpow * ta
+  emit_internal_mul(ctx, ta, tpow, tx);
+  // td += tx
+  emit_internal_move(ctx, tx, false, td);
+
+  emit_internal_copy(ctx, td, targetid);
+  dealloc_temp(ctx, 6);
+}
+
+void emit_b2a(Context &ctx, const Token &a, const Token &b, const Token &c,
+              const Token &d) {
+  std::string varname = std::get<std::string>(b.value);
+  size_t bid = ctx.variables[varname];
+
+  varname = std::get<std::string>(c.value);
+  size_t cid = ctx.variables[varname];
+
+  varname = std::get<std::string>(d.value);
+  size_t did = ctx.variables[varname];
+
+  size_t ta = alloc_temp(ctx, 4);
+  size_t t10 = ta + 1;
+  size_t rem = ta + 2;
+  size_t div = ta + 3;
+
+  // t10 = 10
+  emit_internal_clear(ctx, t10);
+  go_to(ctx, t10);
+  add_value(ctx, 10);
+
+  // ta = a
+  emit_internal_set(ctx, a, ta);
+
+  // div, rem = a /% 10
+  emit_internal_divmod(ctx, ta, t10, div, rem);
+  // d = rem
+  emit_internal_copy(ctx, rem, did);
+  go_to(ctx, did);
+  add_value(ctx, 48);
+
+  // ta = div
+  emit_internal_copy(ctx, div, ta);
+  // t10 = 10
+  emit_internal_clear(ctx, t10);
+  go_to(ctx, t10);
+  add_value(ctx, 10);
+  // div, rem = a /% 10
+  emit_internal_divmod(ctx, ta, t10, div, rem);
+  // c = rem
+  emit_internal_copy(ctx, rem, cid);
+  go_to(ctx, cid);
+  add_value(ctx, 48);
+  // b = div
+  emit_internal_copy(ctx, div, bid);
+  go_to(ctx, bid);
+  add_value(ctx, 48);
+
+  dealloc_temp(ctx, 4);
+}
+
 std::string kcuf(const std::string &code) {
   std::vector<Token> tokens = tokenize(code);
 
@@ -934,7 +1055,15 @@ std::string kcuf(const std::string &code) {
       break;
 
     case A2B:
+      emit_a2b(context, tokens[i + 1], tokens[i + 2], tokens[i + 3],
+               tokens[i + 4]);
+      i += 5;
+      break;
     case B2A:
+      emit_b2a(context, tokens[i + 1], tokens[i + 2], tokens[i + 3],
+               tokens[i + 4]);
+      i += 5;
+      break;
 
     case LSet:
     case LGet:
@@ -1030,6 +1159,7 @@ mod A D A\n\
 msg A B C D"); // expected: [79,13,6,1,79,13,6,1,0,13,6,1]
   */
 
+  /*
   std::string result = kcuf("var X K\n\
 read X\n\
 cmp 80 X K\n\
@@ -1038,6 +1168,17 @@ cmp X 'z' K\n\
 msg X K\n\
 cmp X X K\n\
 msg X K");
+  */
+
+  std::string result = kcuf("var A B C D\n\
+set a 247\n\
+b2a A B C D\n\
+msg A B C D\n\
+inc B 1\n\
+dec C 2\n\
+inc D 5\n\
+a2b B C D A\n\
+msg A B C D // A = (100 * (2 + 1) + 10 * (4 - 2) + (7 + 5)) % 256 = 76 = 0x4c)");
 
   std::cerr << "Result:" << std::endl;
   std::cout << result << std::endl;
